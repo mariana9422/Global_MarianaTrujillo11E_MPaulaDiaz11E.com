@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hypothesis Testing Tool</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <div class="logo-block">
+        <span class="logo-symbol">∑</span>
+        <div>
+          <h1>HypothesisTool</h1>
+          <p class="subtitle">Interactive Statistical Testing · Global Economics G11</p>
+        </div>
+      </div>
+      <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="manual">C8 · Manual Mode</button>
+        <button class="tab-btn" data-tab="csv">C9 · CSV Mode</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════ C8 MANUAL MODE -->
+  <main id="tab-manual" class="tab-content active">
+    <div class="layout">
+
+      <!-- LEFT: Controls -->
+      <section class="panel controls-panel">
+        <h2 class="panel-title">Parameters</h2>
+
+        <div class="field-group">
+          <label class="field-label">Test Type</label>
+          <div class="radio-row">
+            <label><input type="radio" name="mode" value="mean" checked /> Mean (z)</label>
+            <label><input type="radio" name="mode" value="proportion" /> Proportion (z)</label>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Test Direction</label>
+          <select id="direction">
+            <option value="two">Two-tailed</option>
+            <option value="left">Left-tailed</option>
+            <option value="right">Right-tailed</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Significance Level α</label>
+          <div class="slider-row">
+            <input type="range" id="alpha-slider" min="0.01" max="0.10" step="0.01" value="0.05" />
+            <input type="number" id="alpha-box" min="0.01" max="0.10" step="0.01" value="0.05" class="num-box" />
+          </div>
+        </div>
+
+        <!-- MEAN MODE -->
+        <div id="mean-params">
+          <div class="field-group">
+            <label class="field-label">Benchmark Mean (μ₀)</label>
+            <div class="slider-row">
+              <input type="range" id="mu0-slider" min="0" max="200" step="0.5" value="100" />
+              <input type="number" id="mu0-box" value="100" class="num-box" />
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Sample Mean (x̄)</label>
+            <div class="slider-row">
+              <input type="range" id="xbar-slider" min="0" max="200" step="0.5" value="105" />
+              <input type="number" id="xbar-box" value="105" class="num-box" />
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Standard Deviation (σ)</label>
+            <div class="slider-row">
+              <input type="range" id="sigma-slider" min="1" max="100" step="0.5" value="15" />
+              <input type="number" id="sigma-box" value="15" class="num-box" />
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Sample Size (n)</label>
+            <div class="slider-row">
+              <input type="range" id="n-slider" min="5" max="500" step="1" value="36" />
+              <input type="number" id="n-box" value="36" class="num-box" />
+            </div>
+          </div>
+        </div>
+
+        <!-- PROPORTION MODE -->
+        <div id="prop-params" style="display:none">
+          <div class="field-group">
+            <label class="field-label">Benchmark Proportion (p₀)</label>
+            <div class="slider-row">
+              <input type="range" id="p0-slider" min="0.01" max="0.99" step="0.01" value="0.50" />
+              <input type="number" id="p0-box" value="0.50" step="0.01" class="num-box" />
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Sample Proportion (p̂)</label>
+            <div class="slider-row">
+              <input type="range" id="phat-slider" min="0.01" max="0.99" step="0.01" value="0.55" />
+              <input type="number" id="phat-box" value="0.55" step="0.01" class="num-box" />
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Sample Size (n)</label>
+            <div class="slider-row">
+              <input type="range" id="np-slider" min="5" max="1000" step="1" value="100" />
+              <input type="number" id="np-box" value="100" class="num-box" />
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- RIGHT: Output -->
+      <section class="panel output-panel">
+        <h2 class="panel-title">Results</h2>
+
+        <canvas id="curve-canvas" width="620" height="280"></canvas>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">Test Statistic (z)</span>
+            <span class="stat-value" id="z-val">—</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">p-value</span>
+            <span class="stat-value" id="p-val">—</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Critical Value</span>
+            <span class="stat-value" id="crit-val">—</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Decision</span>
+            <span class="stat-value" id="decision-val">—</span>
+          </div>
+        </div>
+
+        <div class="conclusion-box" id="conclusion-box">
+          <strong>Conclusion:</strong> <span id="conclusion-text">Enter parameters to begin.</span>
+        </div>
+
+        <div class="errors-box">
+          <h3 class="errors-title">Interpretation of Errors</h3>
+          <div class="errors-grid">
+            <div class="error-card type1">
+              <span class="error-label">Type I Error (α)</span>
+              <span class="error-desc" id="type1-text">Rejecting H₀ when it is actually true.</span>
+            </div>
+            <div class="error-card type2">
+              <span class="error-label">Type II Error (β)</span>
+              <span class="error-desc" id="type2-text">Failing to reject H₀ when it is actually false.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hypotheses-display">
+          <span class="hyp" id="h0-display">H₀: —</span>
+          <span class="hyp" id="h1-display">H₁: —</span>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ═══════════════════════════════════════════════════ C9 CSV MODE -->
+  <main id="tab-csv" class="tab-content">
+    <div class="layout">
+
+      <section class="panel controls-panel">
+        <h2 class="panel-title">Upload CSV Data</h2>
+
+        <div class="upload-zone" id="upload-zone">
+          <input type="file" id="csv-file" accept=".csv" style="display:none" />
+          <div class="upload-icon">📂</div>
+          <p>Click or drag a CSV file here</p>
+          <small>Supported: mean-based or proportion-based (0/1) data</small>
+          <button class="btn-upload" onclick="document.getElementById('csv-file').click()">Choose File</button>
+        </div>
+
+        <div id="csv-controls" style="display:none">
+          <div class="field-group">
+            <label class="field-label">Group Column</label>
+            <select id="group-col"></select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Value Column</label>
+            <select id="value-col"></select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Benchmark Group</label>
+            <select id="bench-group"></select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Test Group</label>
+            <select id="test-group"></select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Test Direction</label>
+            <select id="csv-direction">
+              <option value="two">Two-tailed</option>
+              <option value="left">Left-tailed</option>
+              <option value="right">Right-tailed</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Significance Level α</label>
+            <select id="csv-alpha">
+              <option value="0.01">0.01</option>
+              <option value="0.05" selected>0.05</option>
+              <option value="0.10">0.10</option>
+            </select>
+          </div>
+          <button class="btn-run" id="run-csv-btn">Run Hypothesis Test</button>
+        </div>
+
+        <div id="csv-summary" class="summary-table-wrap"></div>
+      </section>
+
+      <section class="panel output-panel">
+        <h2 class="panel-title">CSV Results</h2>
+        <canvas id="csv-canvas" width="620" height="280"></canvas>
+        <div class="stats-grid" id="csv-stats" style="display:none">
+          <div class="stat-card">
+            <span class="stat-label">Test Statistic (z)</span>
+            <span class="stat-value" id="csv-z-val">—</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">p-value</span>
+            <span class="stat-value" id="csv-p-val">—</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Critical Value</span>
+            <span class="stat-value" id="csv-crit-val">—</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Decision</span>
+            <span class="stat-value" id="csv-decision">—</span>
+          </div>
+        </div>
+        <div class="conclusion-box" id="csv-conclusion-box" style="display:none">
+          <strong>Conclusion:</strong> <span id="csv-conclusion-text"></span>
+        </div>
+        <div class="placeholder-msg" id="csv-placeholder">
+          Upload a CSV file and configure the groups to run the test.
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <p>Global Economics · Grade 11 · Term 3 · Learning Evidence 4 &nbsp;|&nbsp; Hypothesis Testing Tool (C8–C10)</p>
+    <p><a href="#" id="gh-link">🔗 View on GitHub Pages</a></p>
+  </footer>
+
+  <script src="stats.js"></script>
+  <script src="draw.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
